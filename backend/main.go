@@ -80,6 +80,10 @@ func main() {
 		// Rute untuk transaction
 		apiRoutes.POST("/transactions", controllers.CreateTransaction)
 		apiRoutes.GET("/transactions", controllers.GetAllTransactions)
+
+		// Rute untuk profile
+		apiRoutes.PUT("/profile/details", controllers.UpdateUserDetails)
+		apiRoutes.PUT("/profile/password", controllers.ChangePassword)
 	}
 
 	log.Println("Starting server on :8080")
