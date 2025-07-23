@@ -7,18 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { toast } from "sonner";
-import { WalletFormDialog } from './_components/wallet-form-dialog'; 
+import { WalletFormDialog } from './_components/wallet-form-dialog';
+import { DeleteWalletDialog } from './_components/delete-wallet-dialog'; 
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
 
-interface Wallet {
-  id: number;
-  name: string;
-  balance: number;
-  bank_name?: string;
-}
+interface User { currency?: string; }
+interface Wallet { id: number; name: string; balance: number; bank_name?: string; currency: string; }
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchWallets = async () => {
@@ -40,16 +38,14 @@ export default function WalletsPage() {
     fetchWallets();
   }, []);
 
-  const handleDelete = async (walletId: number) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus dompet ini?')) return;
-
+ const handleDelete = async (walletId: number) => {
     try {
       await api.delete(`/api/wallets/${walletId}`);
-      toast.success("Sukses", { description: "Dompet berhasil dihapus." });
-      fetchWallets(); // Muat ulang data setelah berhasil
+      toast.success("Dompet berhasil dihapus.");
+      fetchData(); // Auto-refresh data
     } catch (error) {
-      console.error("Failed to delete wallet:", error);
-      toast.error("Gagal menghapus", { description: "Dompet tidak bisa dihapus." });
+      console.error("Gagal menghapus dompet:", error);
+      toast.error("Gagal menghapus dompet.");
     }
   };
 
@@ -59,7 +55,28 @@ export default function WalletsPage() {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(value);
+  }; 
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [profileRes, walletsRes] = await Promise.all([
+        api.get('/api/profile'),
+        api.get('/api/wallets'),
+      ]);
+      setUser(profileRes.data.user);
+      setWallets(walletsRes.data.data || []);
+    } catch (error) {
+      console.error("Gagal memuat data:", error);
+      toast.error("Gagal memuat data.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -67,12 +84,8 @@ export default function WalletsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Kelola Dompet</h1>
-        {/* 2. Gunakan Dialog untuk tombol Tambah */}
-        <WalletFormDialog mode="create" onSuccess={fetchWallets}>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Tambah Dompet
-          </Button>
+        <WalletFormDialog mode="create" onSuccess={fetchData} user={user}>
+          <Button><PlusCircle className="mr-2 h-4 w-4" />Tambah Dompet</Button>
         </WalletFormDialog>
       </div>
 
@@ -103,15 +116,14 @@ export default function WalletsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {/* 3. Gunakan Dialog untuk menu Edit */}
-                      <WalletFormDialog mode="edit" initialData={wallet} onSuccess={fetchWallets}>
+                      <WalletFormDialog mode="edit" initialData={wallet} onSuccess={fetchData} user={user}>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           Edit
                         </DropdownMenuItem>
                       </WalletFormDialog>
-                      <DropdownMenuItem onClick={() => handleDelete(wallet.id)} className="text-red-500">
-                        Hapus
-                      </DropdownMenuItem>
+                      <DeleteWalletDialog onConfirm={() => handleDelete(wallet.id)}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Hapus</DropdownMenuItem>
+                      </DeleteWalletDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

@@ -10,6 +10,7 @@ type Wallet struct {
 	UserID    uint      `gorm:"not null" json:"user_id"`
 	Name      string    `gorm:"not null" json:"name"`
 	BankName  string    `gorm:"size:50" json:"bank_name,omitempty"`
+	Currency  string    `gorm:"size:5;not null" json:"currency"`
 	Balance   float64   `gorm:"type:decimal(15,2);not null;default:0.00" json:"balance"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

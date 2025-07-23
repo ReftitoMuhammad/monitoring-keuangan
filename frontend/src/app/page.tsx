@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,12 +86,12 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 pt-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Loading..." : "Masuk"}
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Belum punya akun? <a href="#" className="underline">Daftar</a>
+              Belum punya akun? <Link href="/register" className="underline">Daftar</Link>
             </p>
           </CardFooter>
         </form>

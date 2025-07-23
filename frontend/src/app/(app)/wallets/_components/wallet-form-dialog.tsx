@@ -3,9 +3,9 @@
 import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WalletFormValues, walletSchema } from "@/lib/schemas/wallet-schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import api from "@/lib/api";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,28 +33,27 @@ interface Wallet {
   name: string;
   balance: number;
   bank_name?: string;
+  currency: string;
 }
 
 interface WalletFormDialogProps {
-  children: React.ReactNode; // Tombol atau link yang memicu dialog
+  children: React.ReactNode; 
   mode: "create" | "edit";
   initialData?: Wallet;
-  onSuccess: () => void; // Fungsi untuk refresh data di halaman utama
+  onSuccess: () => void;
+  user: { currency?: string } | null; 
 }
 
-export function WalletFormDialog({
-  children,
-  mode,
-  initialData,
-  onSuccess,
-}: WalletFormDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(false);
 
+  export function WalletFormDialog({ children, mode, initialData, onSuccess, user }: WalletFormDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const form = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema) as Resolver<WalletFormValues>,
     defaultValues: {
       name: initialData?.name || "",
       bank_name: initialData?.bank_name || "",
+      currency: initialData?.currency || user?.currency || "IDR",
       balance: initialData?.balance || undefined,
     },
   });
@@ -124,6 +123,24 @@ export function WalletFormDialog({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mata Uang</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="IDR">IDR - Rupiah</SelectItem>
+                      <SelectItem value="USD">USD - US Dollar</SelectItem>
+                      <SelectItem value="EUR">EUR - Euro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             {mode === 'create' && (
               <FormField
                 control={form.control}
@@ -156,3 +173,4 @@ export function WalletFormDialog({
     </Dialog>
   );
 }
+

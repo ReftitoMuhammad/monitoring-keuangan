@@ -21,7 +21,8 @@ func getCurrentUser(c *gin.Context) (models.User, bool) {
 type CreateWalletInput struct {
 	Name     string  `json:"name" binding:"required"`
 	BankName string  `json:"bank_name"`
-	Balance  float64 `json:"balance"` // Balance bersifat opsional saat dibuat, default 0
+	Currency string  `json:"currency"`
+	Balance  float64 `json:"balance"`
 }
 
 // CreateWallet: Membuat dompet baru untuk user yang sedang login
@@ -35,9 +36,15 @@ func CreateWallet(c *gin.Context) {
 		return
 	}
 
+	walletCurrency := input.Currency
+	if walletCurrency == "" {
+		walletCurrency = currentUser.Currency // Ambil dari default user
+	}
+
 	wallet := models.Wallet{
 		Name:     input.Name,
 		BankName: input.BankName,
+		Currency: walletCurrency,
 		Balance:  input.Balance,
 		UserID:   currentUser.ID,
 	}

@@ -84,6 +84,9 @@ func main() {
 		apiRoutes.POST("/transactions", controllers.CreateTransaction)
 		apiRoutes.GET("/transactions", controllers.GetAllTransactions)
 
+		// Exchange
+		apiRoutes.GET("/exchange-rates", controllers.GetExchangeRates)
+
 	}
 
 	log.Println("Starting server on :8080")

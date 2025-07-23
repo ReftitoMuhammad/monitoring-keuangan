@@ -15,7 +15,7 @@ import { PlusCircle } from 'lucide-react';
 import { TransactionFormDialog } from './_components/transaction-form-dialog';
 
 // Definisikan tipe data
-interface Wallet { id: number; name: string; }
+interface Wallet { id: number; name: string; currency: string }
 interface Category { id: number; name: string; type: 'income' | 'expense'; }
 interface Transaction {
   id: number;

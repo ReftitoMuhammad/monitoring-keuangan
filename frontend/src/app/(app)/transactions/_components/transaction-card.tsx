@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-interface Wallet { id: number; name: string; }
+interface Wallet { id: number; name: string; currency: string; }
 interface Category { id: number; name: string; type: 'income' | 'expense'; }
 interface Transaction {
   id: number;
@@ -16,7 +16,7 @@ interface TransactionCardProps {
   transaction: Transaction;
 }
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number, currency: string) => new Intl.NumberFormat('id-ID', { style: 'currency', currency, minimumFractionDigits: 0 }).format(value);
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export function TransactionCard({ transaction: tx }: TransactionCardProps) {
@@ -37,7 +37,7 @@ export function TransactionCard({ transaction: tx }: TransactionCardProps) {
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <p className={`font-bold text-lg ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
-            {isIncome ? '+' : '-'} {formatCurrency(tx.amount)}
+            {isIncome ? '+' : '-'} {formatCurrency(tx.amount, tx.wallet.currency)}
           </p>
           <p className="text-xs text-muted-foreground">{formatDate(tx.transaction_date)}</p>
         </div>

@@ -9,13 +9,14 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 
 interface EditProfileDialogProps {
   children: React.ReactNode;
-  user: { name: string; email: string; } | null;
+  user: { name: string; email: string; currency?: string; } | null;
   onSuccess: () => void;
 }
 
@@ -26,7 +27,7 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: user?.name || "" },
+    defaultValues: { name: user?.name || "", currency: user?.currency || "IDR" },
   });
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,8 +44,9 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
   const onSubmit = async (values: ProfileFormValues) => {
     try {
       // [REVISI] Buat satu payload dinamis
-      const payload: { name: string; profile_image_url?: string } = {
+      const payload: { name: string; currency?: string; profile_image_url?: string } = {
         name: values.name,
+        currency: values.currency,
       };
 
       if (imagePreview) {
@@ -86,8 +88,33 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel>Nama Lengkap</FormLabel>
+                <FormControl>
+                    <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
             )}/>
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mata Uang</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="IDR">IDR - Rupiah</SelectItem>
+                      <SelectItem value="USD">USD - US Dollar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
               <Button type="submit" disabled={form.formState.isSubmitting}>Simpan</Button>
