@@ -10,9 +10,14 @@ import (
 )
 
 type UpdateDetailsInput struct {
-	Name     string `json:"name" binding:"required"`
-	Currency string `json:"currency" binding:"required"`
+	Name            string `json:"name" binding:"required"`
+	Currency        string `json:"currency" binding:"required"`
+	ProfileImageURL string `json:"profile_image_url" binding:"required"`
 }
+
+// type UpdateProfilePictureInput struct {
+// 	ProfileImageURL string `json:"profile_image_url" binding:"required"`
+// }
 
 // UpdateUserDetails: Mengubah nama dan mata uang user
 func UpdateUserDetails(c *gin.Context) {
@@ -25,8 +30,65 @@ func UpdateUserDetails(c *gin.Context) {
 		return
 	}
 
-	// Update data user di database
 	db.Model(&currentUser).Updates(models.User{Name: input.Name, Currency: input.Currency})
+	c.JSON(http.StatusOK, gin.H{"data": currentUser})
+}
+
+// func UpdateProfilePicture(c *gin.Context) {
+// 	var input UpdateProfilePictureInput
+// 	db := c.MustGet("db").(*gorm.DB)
+// 	currentUser, _ := getCurrentUser(c)
+
+// 	if err := c.ShouldBindJSON(&input); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	// Di aplikasi nyata, ini seharusnya URL dari layanan penyimpanan (S3, GCS).
+// 	// Untuk demo, kita simpan string base64.
+// 	db.Model(&currentUser).Update("profile_image_url", input.ProfileImageURL)
+
+// 	c.JSON(http.StatusOK, gin.H{"data": currentUser})
+// }
+
+type UpdateProfileInput struct {
+	Name            string `json:"name,omitempty"`
+	Currency        string `json:"currency,omitempty"`
+	ProfileImageURL string `json:"profile_image_url,omitempty"`
+}
+
+// [REVISI] Satu fungsi untuk menangani semua jenis update profil
+func UpdateProfile(c *gin.Context) {
+	var input UpdateProfileInput
+	db := c.MustGet("db").(*gorm.DB)
+	currentUser, _ := getCurrentUser(c)
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Buat map untuk menampung data yang akan diupdate secara dinamis
+	updateData := make(map[string]interface{})
+	if input.Name != "" {
+		updateData["name"] = input.Name
+	}
+	if input.Currency != "" {
+		updateData["currency"] = input.Currency
+	}
+	// Perhatikan: kita tidak memeriksa string kosong untuk URL gambar,
+	// karena string kosong bisa jadi valid untuk menghapus gambar.
+	// Frontend akan mengontrol kapan harus mengirim field ini.
+	if _, ok := c.GetPostForm("profile_image_url"); ok || input.ProfileImageURL != "" {
+		updateData["profile_image_url"] = input.ProfileImageURL
+	}
+
+	if len(updateData) > 0 {
+		if err := db.Model(&currentUser).Updates(updateData).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
+			return
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{"data": currentUser})
 }

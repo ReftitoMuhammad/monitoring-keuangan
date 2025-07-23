@@ -7,12 +7,14 @@ import Cookies from 'js-cookie';
 import { Home, LogOut, Wallet as WalletIcon, Shapes, ArrowRightLeft, Plus, Settings, ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TransactionFormDialog } from '@/app/(app)/transactions/_components/transaction-form-dialog';
+import { cn } from '@/lib/utils'; 
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode; }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isVerified, setIsVerified] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = Cookies.get('token');
@@ -28,9 +30,18 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     router.replace('/');
   };
 
-  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <Link href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary ${pathname.startsWith(href) ? 'bg-muted text-primary' : ''}`}>
-      {children}
+  const NavLink = ({ href, icon, text }: { href: string; icon: React.ReactNode; text: string; }) => (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+        // [FIX] Logika untuk status aktif
+        pathname.startsWith(href) && "text-primary", // Selalu ubah warna ikon/teks saat aktif
+        pathname.startsWith(href) && isSidebarOpen && "bg-muted" // HANYA tampilkan latar belakang saat aktif DAN sidebar terbuka
+      )}
+    >
+      {icon}
+      <span className={cn("whitespace-nowrap transition-opacity", !isSidebarOpen && "opacity-0 pointer-events-none")}>{text}</span>
     </Link>
   );
 
@@ -43,44 +54,51 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   if (!isVerified) return null;
 
   return (
-    <>
-      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        {/* Sidebar Desktop */}
-        <div className="hidden border-r bg-background md:block">
-          <div className="flex h-full max-h-screen flex-col gap-2">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                <WalletIcon className="h-6 w-6" /><span>Dompet Kustom</span>
-              </Link>
-            </div>
-            <div className="flex-1 overflow-auto py-2">
-              <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                <NavLink href="/dashboard"><Home className="h-4 w-4" />Dashboard</NavLink>
-                <NavLink href="/wallets"><WalletIcon className="h-4 w-4" />Dompet</NavLink>
-                <NavLink href="/categories"><Shapes className="h-4 w-4" />Kategori</NavLink>
-                <NavLink href="/transactions"><ArrowRightLeft className="h-4 w-4" />Transaksi</NavLink>
-              </nav>
-            </div>
-            <div className="mt-auto p-4">
-              <NavLink href="/settings"><Settings className="h-4 w-4" />Pengaturan</NavLink>
-            </div>
+     <div className="relative min-h-screen w-full bg-muted/40">
+      {/* Sidebar Desktop dengan positioning 'fixed' */}
+      <div 
+        className={cn(
+          "fixed inset-y-0 left-0 z-10 hidden h-full border-r bg-background transition-all duration-300 ease-in-out md:block",
+          isSidebarOpen ? "w-[280px]" : "w-[72px]"
+        )}
+        onMouseEnter={() => setIsSidebarOpen(true)}
+        onMouseLeave={() => setIsSidebarOpen(false)}
+      >
+        <div className="flex h-full max-h-screen flex-col gap-2">
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+              <WalletIcon className="h-6 w-6" />
+              <span className={cn("whitespace-nowrap transition-opacity", !isSidebarOpen && "opacity-0 pointer-events-none")}>Dompet Kustom</span>
+            </Link>
+          </div>
+          <div className="flex-1 py-2">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+              <NavLink href="/dashboard" icon={<Home className="h-5 w-5" />} text="Dashboard" />
+              <NavLink href="/wallets" icon={<WalletIcon className="h-5 w-5" />} text="Dompet" />
+              <NavLink href="/categories" icon={<Shapes className="h-5 w-5" />} text="Kategori" />
+              <NavLink href="/transactions" icon={<ArrowRightLeft className="h-5 w-5" />} text="Transaksi" />
+            </nav>
+          </div>
+          {/* [REVISI] Tombol Pengaturan sekarang disembunyikan saat sidebar tertutup */}
+          <div className={cn("mt-auto p-4 transition-opacity", !isSidebarOpen && "opacity-0 pointer-events-none")}>
+            <NavLink href="/settings" icon={<Settings className="h-5 w-5" />} text="Pengaturan" />
           </div>
         </div>
-        
-        {/* Konten Utama */}
-        <div className="flex flex-col">
-          <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 font-semibold text-lg md:justify-end">
-            <div className="md:hidden"> {/* Judul Halaman Mobile */}
-                <h1 className="font-semibold text-lg capitalize">{pathname.split('/').pop()}</h1>
-            </div>
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" />
-            </Button>
-          </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40 pb-24 md:pb-6 overflow-y-auto">
-            {children}
-          </main>
-        </div>
+      </div>
+      
+      {/* [REVISI] Konten Utama dengan margin statis */}
+      <div className="flex flex-col md:ml-[72px]">
+        <header className="flex h-14 items-center justify-between border-b bg-background px-4 font-semibold text-lg md:justify-end">
+          <div className="md:hidden">
+            <h1 className="font-semibold text-lg capitalize">{pathname.split('/').pop()}</h1>
+          </div>
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={handleLogout}>
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6">
+          {children}
+        </main>
       </div>
 
       {/* [REVISI] Navigasi Bawah Mobile */}
@@ -134,6 +152,6 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           <Plus className="h-8 w-8" />
         </Button>
       </div>
-    </>
+    </div>
   );
 }

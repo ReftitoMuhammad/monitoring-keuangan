@@ -62,28 +62,28 @@ func main() {
 	apiRoutes := router.Group("/api")
 	apiRoutes.Use(middlewares.AuthMiddleware())
 	{
-		// Rute untuk profil
+		// Rute Profile
 		apiRoutes.GET("/profile", controllers.GetProfile)
+		apiRoutes.PUT("/profile", controllers.UpdateProfile)
+		apiRoutes.PUT("/profile/password", controllers.ChangePassword)
 
-		// Rute untuk Wallets
+		// Wallets
 		apiRoutes.POST("/wallets", controllers.CreateWallet)
 		apiRoutes.GET("/wallets", controllers.GetAllWallets)
 		apiRoutes.GET("/wallets/:id", controllers.GetWalletByID)
 		apiRoutes.PUT("/wallets/:id", controllers.UpdateWallet)
 		apiRoutes.DELETE("/wallets/:id", controllers.DeleteWallet)
 
-		// Rute untuk category
+		// Categories
 		apiRoutes.POST("/categories", controllers.CreateCategory)
 		apiRoutes.GET("/categories", controllers.GetAllCategories)
+		apiRoutes.PUT("/categories/:id", controllers.UpdateCategory)
 		apiRoutes.DELETE("/categories/:id", controllers.DeleteCategory)
 
-		// Rute untuk transaction
+		// Transactions
 		apiRoutes.POST("/transactions", controllers.CreateTransaction)
 		apiRoutes.GET("/transactions", controllers.GetAllTransactions)
 
-		// Rute untuk profile
-		apiRoutes.PUT("/profile/details", controllers.UpdateUserDetails)
-		apiRoutes.PUT("/profile/password", controllers.ChangePassword)
 	}
 
 	log.Println("Starting server on :8080")

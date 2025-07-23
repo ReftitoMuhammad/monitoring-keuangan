@@ -49,6 +49,26 @@ func GetAllCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": categories})
 }
 
+func UpdateCategory(c *gin.Context) {
+	var input CategoryInput
+	db := c.MustGet("db").(*gorm.DB)
+	currentUser, _ := getCurrentUser(c)
+
+	var category models.Category
+	if err := db.Where("id = ? AND user_id = ?", c.Param("id"), currentUser.ID).First(&category).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db.Model(&category).Updates(input)
+	c.JSON(http.StatusOK, gin.H{"data": category})
+}
+
 // DeleteCategory: Menghapus kategori
 func DeleteCategory(c *gin.Context) {
 	var category models.Category

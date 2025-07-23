@@ -32,6 +32,7 @@ interface Wallet {
   id: number;
   name: string;
   balance: number;
+  bank_name?: string;
 }
 
 interface WalletFormDialogProps {
@@ -53,6 +54,7 @@ export function WalletFormDialog({
     resolver: zodResolver(walletSchema) as Resolver<WalletFormValues>,
     defaultValues: {
       name: initialData?.name || "",
+      bank_name: initialData?.bank_name || "",
       balance: initialData?.balance || undefined,
     },
   });
@@ -65,7 +67,10 @@ export function WalletFormDialog({
         await api.post("/api/wallets", values);
         toast.success("Dompet baru berhasil dibuat.");
       } else {
-        await api.put(`/api/wallets/${initialData?.id}`, { name: values.name });
+        await api.put(`/api/wallets/${initialData?.id}`, { 
+            name: values.name, 
+            bank_name: values.bank_name 
+        });
         toast.success("Dompet berhasil diperbarui.");
       }
       onSuccess(); // Panggil fungsi refresh
@@ -101,6 +106,19 @@ export function WalletFormDialog({
                   <FormLabel>Nama Dompet</FormLabel>
                   <FormControl>
                     <Input placeholder="cth: Dompet Utama" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bank_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nama Bank (Opsional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="cth: BCA, GoPay, Jago" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

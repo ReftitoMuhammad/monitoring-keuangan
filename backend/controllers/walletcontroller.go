@@ -19,8 +19,9 @@ func getCurrentUser(c *gin.Context) (models.User, bool) {
 
 // Struct untuk input saat membuat dompet
 type CreateWalletInput struct {
-	Name    string  `json:"name" binding:"required"`
-	Balance float64 `json:"balance"` // Balance bersifat opsional saat dibuat, default 0
+	Name     string  `json:"name" binding:"required"`
+	BankName string  `json:"bank_name"`
+	Balance  float64 `json:"balance"` // Balance bersifat opsional saat dibuat, default 0
 }
 
 // CreateWallet: Membuat dompet baru untuk user yang sedang login
@@ -35,9 +36,10 @@ func CreateWallet(c *gin.Context) {
 	}
 
 	wallet := models.Wallet{
-		Name:    input.Name,
-		Balance: input.Balance,
-		UserID:  currentUser.ID,
+		Name:     input.Name,
+		BankName: input.BankName,
+		Balance:  input.Balance,
+		UserID:   currentUser.ID,
 	}
 
 	if err := db.Create(&wallet).Error; err != nil {
@@ -82,7 +84,8 @@ func GetWalletByID(c *gin.Context) {
 
 // Struct untuk input saat update dompet
 type UpdateWalletInput struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
+	BankName string `json:"bank_name"`
 }
 
 // UpdateWallet: Memperbarui nama dompet
@@ -107,7 +110,11 @@ func UpdateWallet(c *gin.Context) {
 		return
 	}
 
-	db.Model(&wallet).Updates(input)
+	if err := db.Model(&wallet).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update wallet"})
+		return
+	}
+	// db.Model(&wallet).Updates(input)
 
 	c.JSON(http.StatusOK, gin.H{"data": wallet})
 }

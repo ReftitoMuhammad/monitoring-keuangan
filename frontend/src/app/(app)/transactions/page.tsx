@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '@/lib/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from "sonner";
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
 import { TransactionCard } from './_components/transaction-card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Search, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { TransactionFormDialog } from './_components/transaction-form-dialog';
@@ -27,6 +29,8 @@ interface Transaction {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -40,6 +44,26 @@ export default function TransactionsPage() {
       setIsLoading(false);
     }
   };
+
+  const filteredAndSortedTransactions = useMemo(() => {
+    const filtered = transactions.filter(tx =>
+      (tx.description && tx.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      tx.category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.wallet.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortOrder) {
+      case 'oldest':
+        return filtered.sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime());
+      case 'highest':
+        return filtered.sort((a, b) => b.amount - a.amount);
+      case 'lowest':
+        return filtered.sort((a, b) => a.amount - b.amount);
+      case 'newest':
+      default:
+        return filtered.sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
+    }
+  }, [transactions, searchQuery, sortOrder]);
 
   useEffect(() => {
     fetchTransactions();
@@ -80,6 +104,33 @@ export default function TransactionsPage() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Cari transaksi..."
+            className="w-full rounded-lg bg-background pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="shrink-0 md:w-auto md:px-4">
+              <ArrowUpDown className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Urutkan</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSortOrder('newest')}>Terbaru</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortOrder('oldest')}>Terlama</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortOrder('highest')}>Jumlah Tertinggi</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortOrder('lowest')}>Jumlah Terendah</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Tampilan Tabel untuk Desktop */}
       <div className="hidden md:block border rounded-lg">
         <Table>
@@ -91,7 +142,7 @@ export default function TransactionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((tx) => (
+            {filteredAndSortedTransactions.map((tx: Transaction) => (
               <TableRow key={tx.id}>
                 <TableCell>
                   <div className="font-medium">{tx.description || tx.category.name}</div>
@@ -114,7 +165,7 @@ export default function TransactionsPage() {
 
       {/* [REVISI] Tampilan Kartu untuk Mobile */}
       <div className="md:hidden flex flex-col gap-3 w-full">
-        {transactions.map((tx) => (
+        {filteredAndSortedTransactions.map((tx: Transaction) => (
           <TransactionCard key={tx.id} transaction={tx} />
         ))}
       </div>

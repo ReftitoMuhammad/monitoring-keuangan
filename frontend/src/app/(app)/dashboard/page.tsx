@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/ui/loadingspinner';
 import { DynamicGreeting } from './_components/greeting';
 
 // Definisikan tipe data yang lebih lengkap
-interface Wallet { id: number; name: string; balance: number; }
+interface Wallet { id: number; name: string; balance: number; bank_name?: string; }
 interface Category { id: number; name: string; type: 'income' | 'expense'; }
 interface Transaction {
   id: number;
@@ -92,6 +92,9 @@ export default function DashboardPage() {
             <Card key={wallet.id}>
               <CardHeader>
                 <CardTitle className="text-lg">{wallet.name}</CardTitle>
+                {wallet.bank_name && (
+                  <CardDescription>{wallet.bank_name}</CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{formatCurrency(wallet.balance)}</p>

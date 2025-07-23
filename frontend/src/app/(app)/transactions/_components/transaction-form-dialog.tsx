@@ -102,7 +102,7 @@ export function TransactionFormDialog({ children, onSuccess, transactionType }: 
             {/* Wallet & Category */}
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="wallet_id" render={({ field }) => (
-                  <FormItem><FormLabel>Dompet</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih dompet" /></SelectTrigger></FormControl><SelectContent>{wallets.map(w=><SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Dompet</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih dompet" className="truncate" /></SelectTrigger></FormControl><SelectContent>{wallets.map(w=><SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="category_id" render={({ field }) => (
                   <FormItem><FormLabel>Kategori</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger></FormControl><SelectContent>{categories.map(c=><SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>

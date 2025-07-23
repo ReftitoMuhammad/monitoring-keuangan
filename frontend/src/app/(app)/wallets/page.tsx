@@ -7,14 +7,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { toast } from "sonner";
-import { WalletFormDialog } from './_components/wallet-form-dialog'; // 1. Impor komponen dialog
+import { WalletFormDialog } from './_components/wallet-form-dialog'; 
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
 
-// Definisikan tipe data Wallet
 interface Wallet {
   id: number;
   name: string;
   balance: number;
+  bank_name?: string;
 }
 
 export default function WalletsPage() {
@@ -88,7 +88,11 @@ export default function WalletsPage() {
           <TableBody>
             {wallets.map((wallet) => (
               <TableRow key={wallet.id}>
-                <TableCell className="font-medium">{wallet.name}</TableCell>
+                <TableCell className="font-medium">{wallet.name}
+                  {wallet.bank_name && (
+                    <div className="text-sm text-muted-foreground">{wallet.bank_name}</div>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">{formatCurrency(wallet.balance)}</TableCell>
                 <TableCell>
                   <DropdownMenu>

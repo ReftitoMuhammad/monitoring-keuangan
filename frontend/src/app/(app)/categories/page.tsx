@@ -9,6 +9,8 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { Badge } from '@/components/ui/badge';
 import { CategoryFormDialog } from './_components/category-form-dialog';
+import { DeleteCategoryDialog } from './_components/delete-categories-dialog'; 
+import { EditCategoryDialog } from './_components/edit-category-dialog';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
 
 interface Category {
@@ -95,9 +97,16 @@ export default function CategoriesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleDelete(category.id)} className="text-red-500">
-                        Hapus
-                      </DropdownMenuItem>
+                      <EditCategoryDialog category={category} onSuccess={fetchCategories}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          Edit
+                        </DropdownMenuItem>
+                      </EditCategoryDialog>
+                      <DeleteCategoryDialog onConfirm={() => handleDelete(category.id)}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">
+                          Hapus
+                        </DropdownMenuItem>
+                      </DeleteCategoryDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
