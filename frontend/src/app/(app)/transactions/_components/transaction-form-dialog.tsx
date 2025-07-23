@@ -19,17 +19,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 interface Wallet { id: number; name: string; }
-interface Category { id: number; name: string; }
-
-export function TransactionFormDialog({ children, onSuccess }: { children: React.ReactNode; onSuccess: () => void; }) {
+interface Category { id: number; name: string; type: 'income' | 'expense'; }
+interface TransactionFormDialogProps {
+  children: React.ReactNode;
+  onSuccess: () => void;
+  transactionType: 'income' | 'expense';
+}
+// { children: React.ReactNode; onSuccess: () => void; }: 
+export function TransactionFormDialog({ children, onSuccess, transactionType }: TransactionFormDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const form = useForm<TransactionFormValues>({
-    // [FIX] Secara eksplisit melakukan 'casting' pada resolver. Ini adalah
-    // cara yang paling tegas untuk memberitahu TypeScript agar mempercayai
-    // tipe yang kita berikan, dan ini akan menyelesaikan semua error terkait.
     resolver: zodResolver(transactionSchema) as Resolver<TransactionFormValues>,
     defaultValues: { transaction_date: new Date(), description: "", amount: undefined },
   });
@@ -43,7 +45,8 @@ export function TransactionFormDialog({ children, onSuccess }: { children: React
             api.get('/api/categories'),
           ]);
           setWallets(walletsRes.data.data || []);
-          setCategories(categoriesRes.data.data || []);
+          const allCategories: Category[] = categoriesRes.data.data || [];
+          setCategories(allCategories.filter(c => c.type === transactionType));
         } catch (error) {
           console.error("Failed to fetch dropdown data:", error);
           toast.error("Gagal memuat data dompet & kategori.");
@@ -51,7 +54,7 @@ export function TransactionFormDialog({ children, onSuccess }: { children: React
       };
       fetchData();
     }
-  }, [isOpen]);
+  }, [isOpen, transactionType]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const payload = {
@@ -83,7 +86,9 @@ export function TransactionFormDialog({ children, onSuccess }: { children: React
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tambah Transaksi</DialogTitle>
+          <DialogTitle>
+            {transactionType === 'income' ? 'Tambah Pemasukan / Saldo' : 'Tambah Pengeluaran'}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

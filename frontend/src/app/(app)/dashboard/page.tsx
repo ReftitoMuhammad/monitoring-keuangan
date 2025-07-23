@@ -1,44 +1,51 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api'; // Gunakan API client kita
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign } from 'lucide-react';
+import Link from 'next/link';
+import api from '@/lib/api';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { DollarSign, ArrowRight } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
+import { DynamicGreeting } from './_components/greeting';
 
-// Definisikan tipe data agar sesuai dengan backend
-interface User {
+// Definisikan tipe data yang lebih lengkap
+interface Wallet { id: number; name: string; balance: number; }
+interface Category { id: number; name: string; type: 'income' | 'expense'; }
+interface Transaction {
   id: number;
-  name: string;
-  email: string;
+  description: string;
+  amount: number;
+  transaction_date: string;
+  wallet: Wallet;
+  category: Category;
 }
-
-interface Wallet {
-  id: number;
-  name: string;
-  balance: number;
-}
+interface User { name: string; }
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Ambil data profil dan dompet secara bersamaan
-        const [profileRes, walletsRes] = await Promise.all([
+        const [profileRes, walletsRes, transactionsRes] = await Promise.all([
           api.get('/api/profile'),
           api.get('/api/wallets'),
+          api.get('/api/transactions'),
         ]);
 
         setUser(profileRes.data.user);
-        setWallets(walletsRes.data.data || []);
+        const fetchedWallets = walletsRes.data.data || [];
+        const fetchedTransactions = transactionsRes.data.data || [];
 
-        // Hitung total saldo
-        const total = (walletsRes.data.data || []).reduce(
+        setWallets(fetchedWallets);
+        setRecentTransactions(fetchedTransactions.slice(0, 5));
+
+        const total = fetchedWallets.reduce(
           (sum: number, wallet: Wallet) => sum + wallet.balance,
           0
         );
@@ -46,7 +53,6 @@ export default function DashboardPage() {
 
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-        // Di sini Anda bisa menangani error, misalnya menampilkan notifikasi
       } finally {
         setIsLoading(false);
       }
@@ -55,21 +61,16 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
- if (isLoading) return <LoadingSpinner />;
+  const formatCurrency = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p>Selamat datang kembali, {user?.name}!</p>
+      <DynamicGreeting name={user?.name} />
 
+      {/* Bagian Ringkasan Saldo */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -81,16 +82,16 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">dari {wallets.length} dompet</p>
           </CardContent>
         </Card>
-        {/* Kartu lain (Pemasukan/Pengeluaran) bisa ditambahkan di sini */}
       </div>
 
+      {/* [BARU] Bagian Rincian Dompet */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Dompet Anda</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {wallets.map((wallet) => (
             <Card key={wallet.id}>
               <CardHeader>
-                <CardTitle>{wallet.name}</CardTitle>
+                <CardTitle className="text-lg">{wallet.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{formatCurrency(wallet.balance)}</p>
@@ -99,6 +100,36 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Kartu Ringkasan Transaksi */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Transaksi Terbaru</CardTitle>
+          <CardDescription>Berikut adalah 5 transaksi terakhir Anda.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentTransactions.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{tx.description || tx.category.name}</p>
+                  <p className="text-sm text-muted-foreground">{formatDate(tx.transaction_date)} • {tx.wallet.name}</p>
+                </div>
+                <div className={`font-semibold shrink-0 ${tx.category.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                  {tx.category.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/transactions">
+              Lihat Semua Transaksi <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

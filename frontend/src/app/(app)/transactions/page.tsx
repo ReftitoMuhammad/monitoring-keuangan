@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { Badge } from '@/components/ui/badge';
-import { TransactionFormDialog } from './_components/transaction-form-dialog';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
+import { TransactionCard } from './_components/transaction-card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { TransactionFormDialog } from './_components/transaction-form-dialog';
 
 // Definisikan tipe data
 interface Wallet { id: number; name: string; }
@@ -31,8 +33,8 @@ export default function TransactionsPage() {
     try {
       const response = await api.get('/api/transactions');
       setTransactions(response.data.data || []);
-    } catch (error) {
-      console.error("Failed to fetch transactions:", error);
+    } catch (error: unknown) {
+      console.error("Terjadi error:", error);
       toast.error("Gagal memuat data transaksi.");
     } finally {
       setIsLoading(false);
@@ -47,24 +49,39 @@ export default function TransactionsPage() {
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
   if (isLoading) return <LoadingSpinner />;
-  
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Riwayat Transaksi</h1>
-        <TransactionFormDialog onSuccess={fetchTransactions}>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Tambah Transaksi
-          </Button>
-        </TransactionFormDialog>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Tambah Transaksi
-        </Button>
+        <h1 className="text-3xl font-bold md:mb-4">Riwayat Transaksi</h1>
+        
+        {/* Tombol Tambah Transaksi untuk Desktop */}
+        <div className="hidden md:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Tambah Transaksi
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <TransactionFormDialog transactionType="income" onSuccess={fetchTransactions}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  Pemasukan / Saldo
+                </DropdownMenuItem>
+              </TransactionFormDialog>
+              <TransactionFormDialog transactionType="expense" onSuccess={fetchTransactions}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  Pengeluaran
+                </DropdownMenuItem>
+              </TransactionFormDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      <div className="border rounded-lg">
+      {/* Tampilan Tabel untuk Desktop */}
+      <div className="hidden md:block border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
@@ -93,6 +110,13 @@ export default function TransactionsPage() {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* [REVISI] Tampilan Kartu untuk Mobile */}
+      <div className="md:hidden flex flex-col gap-3 w-full">
+        {transactions.map((tx) => (
+          <TransactionCard key={tx.id} transaction={tx} />
+        ))}
       </div>
     </div>
   );
