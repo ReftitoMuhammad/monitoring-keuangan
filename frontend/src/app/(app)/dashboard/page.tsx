@@ -9,58 +9,68 @@ import { ArrowRight, Scale } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
 import { DynamicGreeting } from './_components/greeting';
 import { CurrencyWalletsDialog } from './_components/currency-wallet-dialog';
+import { toast } from 'sonner';
 
-interface Wallet { 
-  id: number; 
-  name: string; 
-  balance: number; 
-  bank_name?: string;
-  currency: string; 
-}
-
-interface Transaction {
-  id: number; 
-  description: string; 
-  amount: number; 
-  transaction_date: string; 
-  wallet: Wallet; 
-  category: { 
-    name: string; 
-    type: 'income' | 'expense'; 
-  }; 
-}
-
-interface User { 
-  name: string; 
-  currency: string;
-}
+// Definisikan tipe data
+interface Wallet { id: number; name: string; balance: number; bank_name?: string; currency: string; }
+interface User { name: string; currency: string; }
+interface Transaction { id: number; description: string; amount: number; transaction_date: string; wallet: Wallet; category: { name: string; type: 'income' | 'expense'; }; }
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number> | null>(null);
-  // const [setTotalBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const [profileRes, walletsRes, transactionsRes, ratesRes] = await Promise.all([
+        // [REVISI] Gunakan Promise.allSettled agar lebih tangguh
+        const results = await Promise.allSettled([
           api.get('/api/profile'),
           api.get('/api/wallets'),
           api.get('/api/transactions'),
           api.get('/api/exchange-rates'),
         ]);
-        setUser(profileRes.data.user);
-        setWallets(walletsRes.data.data || []);
-        setRecentTransactions((transactionsRes.data.data || []).slice(0, 5));
-        setExchangeRates(ratesRes.data.data);
-      } catch (error) { 
-        console.error("Failed to fetch dashboard data:", error); 
-      } 
-      finally { setIsLoading(false); }
+
+        // Proses hasil profil
+        if (results[0].status === 'fulfilled') {
+          setUser(results[0].value.data.user);
+        } else {
+          console.error("Gagal memuat profil:", results[0].reason);
+        }
+
+        // Proses hasil dompet
+        if (results[1].status === 'fulfilled') {
+          setWallets(results[1].value.data.data || []);
+        } else {
+          console.error("Gagal memuat dompet:", results[1].reason);
+        }
+
+        // Proses hasil transaksi
+        if (results[2].status === 'fulfilled') {
+          setRecentTransactions((results[2].value.data.data || []).slice(0, 5));
+        } else {
+          console.error("Gagal memuat transaksi:", results[2].reason);
+        }
+        
+        // Proses hasil kurs mata uang
+        if (results[3].status === 'fulfilled') {
+          setExchangeRates(results[3].value.data.data);
+        } else {
+          console.error("Gagal memuat kurs mata uang:", results[3].reason);
+        }
+
+      } catch (error) {
+        console.error("Gagal, ini errornya:", error)
+        toast.error("Terjadi kesalahan saat memuat data dashboard.");
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetchData();
   }, []);
 
@@ -80,16 +90,12 @@ export default function DashboardPage() {
     return Object.entries(currencyTotals).reduce((total, [currency, amount]) => {
       const currencyRate = exchangeRates[currency];
       if (!currencyRate) return total;
-      // Konversi ke USD dulu, lalu ke mata uang default
       const amountInUSD = amount / currencyRate;
       return total + (amountInUSD * baseRate);
     }, 0);
   }, [currencyTotals, exchangeRates, user]);
 
   const formatCurrency = (value: number, currency: string) => new Intl.NumberFormat('id-ID', { style: 'currency', currency, minimumFractionDigits: 0 }).format(value);
-  
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -116,7 +122,6 @@ export default function DashboardPage() {
             <Card key={currency}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle>Total Saldo {currency}</CardTitle>
-                {/* [BARU] Tombol Pop-up Rincian */}
                 <CurrencyWalletsDialog
                   currency={currency}
                   wallets={wallets.filter(w => w.currency === currency)}
@@ -128,7 +133,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Kartu Ringkasan Transaksi */}
       <Card>
         <CardHeader>
           <CardTitle>Transaksi Terbaru</CardTitle>
@@ -140,7 +144,7 @@ export default function DashboardPage() {
               <div key={tx.id} className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="font-medium truncate">{tx.description || tx.category.name}</p>
-                  <p className="text-sm text-muted-foreground">{formatDate(tx.transaction_date)} • {tx.wallet.name}</p>
+                  <p className="text-sm text-muted-foreground">{new Date(tx.transaction_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} • {tx.wallet.name}</p>
                 </div>
                 <div className={`font-semibold shrink-0 ${tx.category.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
                   {tx.category.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount, tx.wallet.currency)}
