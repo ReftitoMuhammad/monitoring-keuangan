@@ -24,10 +24,11 @@ export default function WalletsPage() {
     try {
       const response = await api.get('/api/wallets');
       setWallets(response.data.data || []);
-    } catch (error) {
-      console.error("Failed to fetch wallets:", error);
-      toast.error("Gagal memuat data", {
-        description: "Tidak bisa mengambil daftar dompet dari server.",
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      const errorMsg = err.response?.data?.error || "Silakan coba muat ulang halaman.";
+      toast.error("Gagal memuat data dompet", {
+        description: errorMsg,
       });
     } finally {
       setIsLoading(false);

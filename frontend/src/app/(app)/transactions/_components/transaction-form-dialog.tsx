@@ -49,7 +49,9 @@ export function TransactionFormDialog({ children, onSuccess, transactionType }: 
           setCategories(allCategories.filter(c => c.type === transactionType));
         } catch (error) {
           console.error("Failed to fetch dropdown data:", error);
-          toast.error("Gagal memuat data dompet & kategori.");
+          toast.error("Gagal memuat data untuk form", {
+            description: "Tidak bisa mengambil daftar dompet & kategori.",
+          });
         }
       };
       fetchData();

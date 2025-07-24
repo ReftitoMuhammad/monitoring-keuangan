@@ -64,11 +64,13 @@ export default function DashboardPage() {
         }
 
       } catch (error) {
-        console.error("Gagal, ini errornya:", error)
-        toast.error("Terjadi kesalahan saat memuat data dashboard.");
-      } finally {
-        setIsLoading(false);
-      }
+        console.error("errrorrr:", error);
+        toast.error("Gagal memuat data dashboard", {
+          description: "Silakan coba muat ulang halaman.",
+          });
+        } finally {
+        setIsLoading(false);  
+        }
     };
 
     fetchData();
