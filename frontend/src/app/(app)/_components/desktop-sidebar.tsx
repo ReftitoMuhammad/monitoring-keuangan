@@ -37,7 +37,7 @@ export function DesktopSidebar({ isSidebarOpen, setIsSidebarOpen }: DesktopSideb
       onMouseLeave={() => setIsSidebarOpen(false)}
     >
       <div className="flex h-full max-h-screen flex-col justify-between">
-        <div> {/* Grup Atas: Header & Navigasi Utama */}
+        <div> 
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <WalletIcon className="h-6 w-6" />

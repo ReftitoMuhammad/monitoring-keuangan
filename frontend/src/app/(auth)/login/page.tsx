@@ -49,7 +49,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="space-y-2 text-center">
         <Wallet className="mx-auto h-12 w-12" />
-        <CardTitle className="text-2xl">Dompet Kustom</CardTitle>
+        <CardTitle className="text-2xl">Atur uang</CardTitle>
         <CardDescription>Masuk untuk mengelola keuangan Anda</CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
