@@ -28,12 +28,10 @@ func Register(c *gin.Context) {
 
 	// 1. Cek terlebih dahulu apakah email sudah ada
 	var existingUser models.User
-	if err := db.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		// Jika tidak ada error, berarti user ditemukan -> email sudah terdaftar
+	if err := db.Session(&gorm.Session{PrepareStmt: false}).Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah terdaftar."})
 		return
 	} else if err != gorm.ErrRecordNotFound {
-		// Jika errornya BUKAN karena data tidak ditemukan, berarti ada masalah lain di DB
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan pada server."})
 		return
 	}
@@ -75,6 +73,11 @@ func Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := db.Session(&gorm.Session{PrepareStmt: false}).Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau password salah."})
 		return
 	}
 

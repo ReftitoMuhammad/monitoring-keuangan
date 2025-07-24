@@ -42,7 +42,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// [FIX] Ambil subject (userID) dan konversi kembali ke uint
 			userIDStr, err := claims.GetSubject()
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
@@ -57,10 +56,16 @@ func AuthMiddleware() gin.HandlerFunc {
 
 			var user models.User
 			db := c.MustGet("db").(*gorm.DB)
-			if db.First(&user, uint(userID)).Error != nil {
+
+			if db.Session(&gorm.Session{PrepareStmt: false}).First(&user, uint(userID)).Error != nil {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 				return
 			}
+
+			// if db.First(&user, uint(userID)).Error != nil {
+			// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			// 	return
+			// }
 
 			c.Set("currentUser", user)
 			c.Next()
