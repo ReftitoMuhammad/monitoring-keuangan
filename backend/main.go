@@ -11,7 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -21,15 +21,20 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-	)
+	// dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	// 	os.Getenv("DB_USER"),
+	// 	os.Getenv("DB_PASSWORD"),
+	// 	os.Getenv("DB_HOST"),
+	// 	os.Getenv("DB_PORT"),
+	// 	os.Getenv("DB_NAME"),
+	// )
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable not set")
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database!")
 	}
@@ -51,18 +56,15 @@ func main() {
 		c.Next()
 	})
 
-	// Grup rute publik (tidak perlu token)
 	authRoutes := router.Group("/auth")
 	{
 		authRoutes.POST("/register", controllers.Register)
 		authRoutes.POST("/login", controllers.Login)
 	}
 
-	// Grup rute terproteksi (wajib pakai token)
 	apiRoutes := router.Group("/api")
 	apiRoutes.Use(middlewares.AuthMiddleware())
 	{
-		// Rute Profile
 		apiRoutes.GET("/profile", controllers.GetProfile)
 		apiRoutes.PUT("/profile", controllers.UpdateProfile)
 		apiRoutes.PUT("/profile/password", controllers.ChangePassword)
