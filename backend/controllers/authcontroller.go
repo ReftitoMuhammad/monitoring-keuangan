@@ -77,20 +77,19 @@ func Login(c *gin.Context) {
 	}
 
 	if err := db.Session(&gorm.Session{PrepareStmt: false}).Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau password salah."})
+		// Jika ada error (termasuk 'record not found'), berikan pesan ini.
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "DEBUG: Pengguna dengan email ini tidak ditemukan."})
 		return
 	}
 
-	if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau password salah."})
-		return
-	}
-
+	// Langkah 2: Bandingkan password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email atau password salah."})
+		// Jika pengguna ditemukan tapi password tidak cocok, berikan pesan ini.
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "DEBUG: Password tidak cocok."})
 		return
 	}
 
+	// Jika kedua langkah di atas berhasil, buat token
 	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token."})
