@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
-import { Home, LogOut, Wallet as WalletIcon, Shapes, ArrowRightLeft, Plus, Settings, ArrowDown, ArrowUp } from 'lucide-react';
+import { Home, Wallet as WalletIcon, Shapes, ArrowRightLeft, Plus, Settings, ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TransactionFormDialog } from '@/app/(app)/transactions/_components/transaction-form-dialog';
-// import { cn } from '@/lib/utils';
-import { DesktopSidebar } from './_components/desktop-sidebar'; // Impor komponen baru
+import { DesktopSidebar } from './_components/desktop-sidebar'; 
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode; }) {
   const router = useRouter();
@@ -26,11 +25,6 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }
   }, [router]);
 
-  const handleLogout = () => {
-    Cookies.remove('token');
-    router.replace('/');
-  };
-
   const NavLinkMobile = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <Link href={href} className={`flex flex-col items-center justify-center gap-1 transition-all ${pathname.startsWith(href) ? 'text-primary' : 'text-muted-foreground'}`}>
       {children}
@@ -41,25 +35,21 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   return (
     <>
-      {/* Gunakan Komponen Sidebar Desktop */}
       <DesktopSidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      
-      {/* Konten Utama dengan margin statis */}
       <div className="flex flex-col md:ml-[72px]">
         <header className="flex h-14 items-center justify-between border-b bg-background px-4 font-semibold text-lg md:justify-end">
           <div className="md:hidden">
-            <h1 className="font-semibold text-lg capitalize">{pathname.split('/').pop()}</h1>
+            <div className="flex items-center gap-2">
+              <WalletIcon className="w-5 h-5" />
+              <h1 className="font-semibold text-lg">Atur Uang</h1>
+            </div>
           </div>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={handleLogout}>
-            <LogOut className="h-5 w-5" />
-          </Button>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 pb-24 md:pb-6">
           {children}
         </main>
       </div>
 
-      {/* Navigasi Bawah & FAB Mobile (tidak ada perubahan) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm md:hidden">
         <nav className="grid h-16 grid-cols-5 items-center text-xs">
           <NavLinkMobile href="/dashboard"><Home className="h-5 w-5" />Home</NavLinkMobile>

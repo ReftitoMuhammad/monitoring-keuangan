@@ -41,7 +41,7 @@ export function DesktopSidebar({ isSidebarOpen, setIsSidebarOpen }: DesktopSideb
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <WalletIcon className="h-6 w-6" />
-              <span className={cn("whitespace-nowrap transition-opacity", !isSidebarOpen && "opacity-0 pointer-events-none")}>Dompet Kustom</span>
+              <span className={cn("whitespace-nowrap transition-opacity", !isSidebarOpen && "opacity-0 pointer-events-none")}>Atur Uang</span>
             </Link>
           </div>
           <div className="py-2">
