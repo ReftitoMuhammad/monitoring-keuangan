@@ -57,15 +57,10 @@ func AuthMiddleware() gin.HandlerFunc {
 			var user models.User
 			db := c.MustGet("db").(*gorm.DB)
 
-			if db.Session(&gorm.Session{PrepareStmt: false}).First(&user, uint(userID)).Error != nil {
+			if db.First(&user, uint(userID)).Error != nil {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 				return
 			}
-
-			// if db.First(&user, uint(userID)).Error != nil {
-			// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-			// 	return
-			// }
 
 			c.Set("currentUser", user)
 			c.Next()

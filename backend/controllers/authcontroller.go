@@ -16,7 +16,6 @@ type RegisterInput struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
-// [REVISI] Fungsi Register yang lebih robust untuk PostgreSQL
 func Register(c *gin.Context) {
 	var input RegisterInput
 	db := c.MustGet("db").(*gorm.DB)
@@ -26,9 +25,8 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 1. Cek terlebih dahulu apakah email sudah ada
 	var existingUser models.User
-	if err := db.Session(&gorm.Session{PrepareStmt: false}).Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+	if err := db.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah terdaftar."})
 		return
 	} else if err != gorm.ErrRecordNotFound {
@@ -36,27 +34,23 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 2. Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memproses password."})
 		return
 	}
 
-	// 3. Buat objek User baru
 	user := models.User{
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: string(hashedPassword),
 	}
 
-	// 4. Simpan ke Database
 	if err := db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat akun."})
 		return
 	}
 
-	// 5. Kirim respon sukses
 	c.JSON(http.StatusOK, gin.H{"message": "Registrasi berhasil!"})
 }
 
@@ -65,7 +59,6 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// Login: Tidak ada perubahan
 func Login(c *gin.Context) {
 	var input LoginInput
 	var user models.User
@@ -76,20 +69,16 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	if err := db.Session(&gorm.Session{PrepareStmt: false}).Where("email = ?", input.Email).First(&user).Error; err != nil {
-		// Jika ada error (termasuk 'record not found'), berikan pesan ini.
+	if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "DEBUG: Pengguna dengan email ini tidak ditemukan."})
 		return
 	}
 
-	// Langkah 2: Bandingkan password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		// Jika pengguna ditemukan tapi password tidak cocok, berikan pesan ini.
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "DEBUG: Password tidak cocok."})
 		return
 	}
 
-	// Jika kedua langkah di atas berhasil, buat token
 	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token."})
@@ -99,7 +88,6 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// GetProfile: Tidak ada perubahan
 func GetProfile(c *gin.Context) {
 	user, exists := c.Get("currentUser")
 	if !exists {

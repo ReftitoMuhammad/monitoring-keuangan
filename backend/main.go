@@ -2,8 +2,8 @@ package main
 
 import (
 	"dompet/backend/controllers"
+	"dompet/backend/database"
 	"dompet/backend/middlewares"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,31 +11,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	godotenv.Load()
 
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatal("DATABASE_URL environment variable not set")
-	}
-
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: dsn,
-	}), &gorm.Config{
-		PrepareStmt: false,
-	})
-
-	if err != nil {
-		log.Fatal("Failed to connect to database!")
-	}
-	fmt.Println("Database connection successful!")
+	database.ConnectDB()
+	db := database.DB
 
 	router := gin.Default()
 
