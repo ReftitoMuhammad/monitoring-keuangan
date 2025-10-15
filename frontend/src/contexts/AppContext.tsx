@@ -18,6 +18,9 @@ interface AppContextType {
   addWallet: (wallet: Omit<Wallet, 'id'>) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'type'>) => void;
   addCategory: (category: { name: string; type: "income" | "expense" }) => void;
+  editCategory?: (id: number, updatedData: { name: string; type: "income" | "expense" }) => void;
+  deleteCategory: (id: number) => void;
+  editUser?: (user: User) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -121,7 +124,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return updated;
     });
   };
-  const value = { user, wallets, categories, transactions, isLoading, addWallet, addTransaction, addCategory };
+
+  const editCategory = (id: number, updatedData: { name: string; type: "income" | "expense" }) => {
+    setCategories(prev => {
+      const updated = prev.map(c => (c.id === id ? { ...c, ...updatedData } : c));
+      localStorage.setItem('guest_categories', JSON.stringify(updated));
+      return updated;
+    });
+  };
+  
+  const deleteCategory = (id: number) => {
+    setCategories(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      localStorage.setItem('guest_categories', JSON.stringify(updated));
+      return updated;
+    });
+    // Hapus juga transaksi terkait kategori ini
+    setTransactions(prev => {
+      const updated = prev.filter(t => t.category_id !== id);
+      localStorage.setItem('guest_transactions', JSON.stringify(updated));
+      return updated;
+    });
+  }
+
+  const editUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('guest_user', JSON.stringify(updatedUser));
+  };
+
+  const value = { user, wallets, categories, transactions, isLoading, addWallet, addTransaction, addCategory, editCategory, deleteCategory, editUser };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

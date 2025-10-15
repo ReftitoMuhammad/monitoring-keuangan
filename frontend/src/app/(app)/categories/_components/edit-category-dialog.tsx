@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategoryFormValues, categorySchema } from "@/lib/schemas/category-schema";
-import api from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface Category { id: number; name: string; type: 'income' | 'expense'; }
 interface EditCategoryDialogProps { children: React.ReactNode; onSuccess: () => void; category: Category; }
 
 export function EditCategoryDialog({ children, onSuccess, category }: EditCategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { editCategory } = useAppContext();
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: { name: category.name, type: category.type },
@@ -24,10 +26,14 @@ export function EditCategoryDialog({ children, onSuccess, category }: EditCatego
 
   const onSubmit = async (values: CategoryFormValues) => {
     try {
-      await api.put(`/api/categories/${category.id}`, values);
-      toast.success("Kategori berhasil diperbarui.");
-      onSuccess();
-      setIsOpen(false);
+      if (editCategory) {
+        editCategory(category.id, values);
+        toast.success("Kategori berhasil diperbarui.");
+        onSuccess();
+        setIsOpen(false);
+      } else {
+        toast.error("Fungsi editCategory tidak tersedia.");
+      }
     } catch (error) {
       console.error("Terjadi error:", error);
       toast.error("Gagal memperbarui kategori.");
@@ -41,9 +47,34 @@ export function EditCategoryDialog({ children, onSuccess, category }: EditCatego
         <DialogHeader><DialogTitle>Edit Kategori</DialogTitle></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Nama</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )}/>
-            <FormField control={form.control} name="type" render={({ field }) => ( <FormItem><FormLabel>Tipe</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="expense">Pengeluaran</SelectItem><SelectItem value="income">Pemasukan</SelectItem></SelectContent></Select><FormMessage /></FormItem> )}/>
-            <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose><Button type="submit" disabled={form.formState.isSubmitting}>Simpan</Button></DialogFooter>
+            <FormField control={form.control} name="name" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nama</FormLabel>
+                <FormControl><Input {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}/>
+            <FormField control={form.control} name="type" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipe</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="expense">Pengeluaran</SelectItem>
+                    <SelectItem value="income">Pemasukan</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}/>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">Batal</Button>
+              </DialogClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>Simpan</Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

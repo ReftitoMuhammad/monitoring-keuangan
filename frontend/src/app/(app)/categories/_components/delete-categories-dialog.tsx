@@ -11,13 +11,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAppContext } from "@/contexts/AppContext";
+import { toast } from "sonner";
 
 interface DeleteCategoryDialogProps {
   children: React.ReactNode;
-  onConfirm: () => void;
+  categoryId: number;
+  onSuccess?: () => void;
 }
 
-export function DeleteCategoryDialog({ children, onConfirm }: DeleteCategoryDialogProps) {
+export function DeleteCategoryDialog({ children, categoryId, onSuccess }: DeleteCategoryDialogProps) {
+  const { deleteCategory } = useAppContext();
+
+  const handleDelete = () => {
+    deleteCategory(categoryId);
+    toast.success("Kategori berhasil dihapus.");
+    if (onSuccess) onSuccess();
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
@@ -31,7 +42,7 @@ export function DeleteCategoryDialog({ children, onConfirm }: DeleteCategoryDial
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Batal</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Lanjutkan</AlertDialogAction>
+          <AlertDialogAction onClick={handleDelete}>Lanjutkan</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

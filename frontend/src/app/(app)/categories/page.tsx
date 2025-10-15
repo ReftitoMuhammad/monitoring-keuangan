@@ -64,7 +64,7 @@ export default function CategoriesPage() {
                           Edit
                         </DropdownMenuItem>
                       </EditCategoryDialog>
-                      <DeleteCategoryDialog onConfirm={() => handleDelete(category.id)}>
+                      <DeleteCategoryDialog categoryId={category.id}>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">
                           Hapus
                         </DropdownMenuItem>

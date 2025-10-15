@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProfileFormValues, profileSchema } from "@/lib/schemas/profile-schema";
-import api from "@/lib/api";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +11,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import axios from "axios";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface EditProfileDialogProps {
   children: React.ReactNode;
-  user: { name: string; email: string; currency?: string; } | null;
+  user: { name: string; email: string; currency?: string; profile_image_url?: string } | null;
   onSuccess: () => void;
 }
 
@@ -24,6 +23,7 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
   const [isOpen, setIsOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { editUser } = useAppContext();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -43,30 +43,24 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
 
   const onSubmit = async (values: ProfileFormValues) => {
     try {
-      // [REVISI] Buat satu payload dinamis
-      const payload: { name: string; currency?: string; profile_image_url?: string } = {
-        name: values.name,
-        currency: values.currency,
-      };
-
-      if (imagePreview) {
-        payload.profile_image_url = imagePreview;
+      if (editUser) {
+        editUser({
+          ...user,
+          name: values.name,
+          currency: values.currency ?? "",
+          profile_image_url: imagePreview || user?.profile_image_url || "",
+          email: user?.email ?? "",
+        });
+        toast.success("Profil berhasil diperbarui.");
+        onSuccess();
+        setIsOpen(false);
+        setImagePreview(null);
+      } else {
+        toast.error("Gagal memperbarui profil: fungsi editUser tidak tersedia.");
       }
-
-      // [REVISI] Lakukan satu panggilan API saja
-      await api.put("/api/profile", payload);
-
-      toast.success("Profil berhasil diperbarui.");
-      onSuccess();
-      setIsOpen(false);
-      setImagePreview(null);
     } catch (error) {
       console.error("Failed to update profile:", error);
-      if (axios.isAxiosError(error) && error.response) {
-        toast.error("Gagal memperbarui profil.", { description: error.response.data.error });
-      } else {
-        toast.error("Gagal memperbarui profil.");
-      }
+      toast.error("Gagal memperbarui profil.");
     }
   };
 
@@ -77,8 +71,8 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
         <DialogHeader><DialogTitle>Edit Profil</DialogTitle></DialogHeader>
         <div className="flex flex-col items-center gap-4">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={imagePreview || `https://placehold.co/128x128/E2E8F0/475569?text=${user?.name.charAt(0)}`} alt={user?.name} />
-            <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={imagePreview || user?.profile_image_url || `https://placehold.co/128x128/E2E8F0/475569?text=${user?.name?.charAt(0)}`} alt={user?.name} />
+            <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
           <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -91,10 +85,10 @@ export function EditProfileDialog({ children, user, onSuccess }: EditProfileDial
               <FormItem>
                 <FormLabel>Nama Lengkap</FormLabel>
                 <FormControl>
-                    <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}/>
             <FormField
               control={form.control}
