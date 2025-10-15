@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import api from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -12,34 +10,12 @@ import { useRouter } from "next/navigation";
 import { Edit } from 'lucide-react';
 import { EditProfileDialog } from './_components/edit-profile-dialog';
 import { ChangePasswordDialog } from './_components/change-password-dialog';
-
-interface User {
-  name: string;
-  email: string;
-  profile_image_url?: string;
-}
+import { useAppContext } from '@/contexts/AppContext';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading } = useAppContext();
 
-  const fetchUser = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.get('/api/profile');
-      setUser(response.data.user);
-    } catch (error) {
-      console.error("Failed to fetch user data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-  
   const handleLogout = () => {
     Cookies.remove('token');
     router.replace('/');
@@ -59,7 +35,7 @@ export default function SettingsPage() {
             <CardTitle>Akun</CardTitle>
             <CardDescription>Lihat dan perbarui informasi akun Anda.</CardDescription>
           </div>
-          <EditProfileDialog user={user} onSuccess={fetchUser}>
+          <EditProfileDialog user={user} onSuccess={() => {}}>
             <Button variant="outline" size="icon">
               <Edit className="h-4 w-4" />
             </Button>
@@ -68,8 +44,8 @@ export default function SettingsPage() {
         <CardContent>
           <div className="hidden md:flex items-center gap-6">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={`https://placehold.co/128x128/E2E8F0/475569?text=${user?.name.charAt(0)}`} alt={user?.name} />
-              <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={`https://placehold.co/128x128/E2E8F0/475569?text=${user?.name?.charAt(0)}`} alt={user?.name} />
+              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <p className="text-xl font-semibold">{user?.name}</p>
@@ -78,8 +54,8 @@ export default function SettingsPage() {
           </div>
           <div className="md:hidden flex flex-col items-center text-center gap-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={`https://placehold.co/128x128/E2E8F0/475569?text=${user?.name.charAt(0)}`} alt={user?.name} />
-              <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={`https://placehold.co/128x128/E2E8F0/475569?text=${user?.name?.charAt(0)}`} alt={user?.name} />
+              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <p className="text-xl font-semibold">{user?.name}</p>

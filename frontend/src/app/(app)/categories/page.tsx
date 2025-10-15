@@ -1,60 +1,22 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { toast } from "sonner";
 import { Badge } from '@/components/ui/badge';
 import { CategoryFormDialog } from './_components/category-form-dialog';
 import { DeleteCategoryDialog } from './_components/delete-categories-dialog'; 
 import { EditCategoryDialog } from './_components/edit-category-dialog';
 import { LoadingSpinner } from '@/components/ui/loadingspinner';
-
-interface Category {
-  id: number;
-  name: string;
-  type: 'income' | 'expense';
-}
+import { useAppContext } from '@/contexts/AppContext';
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { categories, isLoading } = useAppContext();
 
-  const fetchCategories = async () => {
-    setIsLoading(true);
-    try {
-      const response = await api.get('/api/categories');
-      setCategories(response.data.data || []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Gagal memuat data kategori.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const handleDelete = async (categoryId: number) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus kategori ini?')) return;
-    try {
-      await api.delete(`/api/categories/${categoryId}`);
-      toast.success("Kategori berhasil dihapus.");
-      fetchCategories();
-    } catch (error: unknown) {
-        if (error && typeof error === "object" && "response" in error) {
-        const err = error as { response?: { data?: { error?: string } } };
-        const errorMsg = err.response?.data?.error || "Kategori tidak bisa dihapus.";
-        toast.error("Gagal menghapus", { description: errorMsg });
-    } else {
-    toast.error("Gagal menghapus", { description: "Terjadi kesalahan tidak diketahui." });
-  }
-}
+  // Handler dummy, implementasikan di context jika ingin hapus kategori
+  const handleDelete = (categoryId: number) => {
+    alert('Fitur hapus kategori belum diimplementasikan di context.');
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -63,7 +25,7 @@ export default function CategoriesPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Kelola Kategori</h1>
-        <CategoryFormDialog onSuccess={fetchCategories}>
+        <CategoryFormDialog onSuccess={() => {}}>
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             Tambah Kategori
@@ -97,7 +59,7 @@ export default function CategoriesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <EditCategoryDialog category={category} onSuccess={fetchCategories}>
+                      <EditCategoryDialog category={category} onSuccess={() => {}}>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           Edit
                         </DropdownMenuItem>

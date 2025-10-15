@@ -12,6 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet } from "lucide-react";
 
+const handleGuestLogin = () => {
+  localStorage.setItem('app_mode', 'guest');
+  Cookies.set('token', 'guest-token', { expires: 1 });
+  window.location.href = '/dashboard';
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,6 +73,9 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4 pt-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Loading..." : "Masuk"}
+          </Button>
+          <Button type="button" variant="outline" className="w-full" onClick={handleGuestLogin}>
+            Coba sebagai Tamu
           </Button>
           <p className="text-xs text-center text-muted-foreground">
             Belum punya akun? <Link href="/register" className="underline">Daftar</Link>

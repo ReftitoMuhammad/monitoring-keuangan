@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategoryFormValues, categorySchema } from "@/lib/schemas/category-schema";
-import api from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -12,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface CategoryFormDialogProps {
   children: React.ReactNode;
@@ -20,6 +20,7 @@ interface CategoryFormDialogProps {
 
 export function CategoryFormDialog({ children, onSuccess }: CategoryFormDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { addCategory } = useAppContext();
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -31,13 +32,16 @@ export function CategoryFormDialog({ children, onSuccess }: CategoryFormDialogPr
 
   const onSubmit = async (values: CategoryFormValues) => {
     try {
-      await api.post("/api/categories", values);
+      addCategory({
+        name: values.name,
+        type: values.type,
+      });
       toast.success("Kategori baru berhasil dibuat.");
       onSuccess();
       setIsOpen(false);
       form.reset();
     } catch (error) {
-        console.error("Error Save categories:", error);
+      console.error("Error Save categories:", error);
       toast.error("Gagal menyimpan kategori.");
     }
   };

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { AppProvider } from '@/contexts/AppContext';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import { Home, Wallet as WalletIcon, Shapes, ArrowRightLeft, Plus, Settings, ArrowDown, ArrowUp } from 'lucide-react';
@@ -34,7 +35,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   if (!isVerified) return null;
 
   return (
-    <>
+    <AppProvider>
       <DesktopSidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       <div className="flex flex-col md:ml-[72px]">
         <header className="flex h-14 items-center justify-between border-b bg-background px-4 font-semibold text-lg md:justify-end">
@@ -95,6 +96,6 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           <Plus className="h-8 w-8" />
         </Button>
       </div>
-    </>
+    </AppProvider>
   );
 }

@@ -4,7 +4,6 @@ import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WalletFormValues, walletSchema } from "@/lib/schemas/wallet-schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import api from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface Wallet {
   id: number;
@@ -44,10 +44,10 @@ interface WalletFormDialogProps {
   user: { currency?: string } | null; 
 }
 
-  // const [isOpen, setIsOpen] = useState(false);
-
-  export function WalletFormDialog({ children, mode, initialData, onSuccess, user }: WalletFormDialogProps) {
+export function WalletFormDialog({ children, mode, initialData, onSuccess, user }: WalletFormDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { addWallet } = useAppContext();
+
   const form = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema) as Resolver<WalletFormValues>,
     defaultValues: {
@@ -63,17 +63,19 @@ interface WalletFormDialogProps {
   const onSubmit = async (values: WalletFormValues) => {
     try {
       if (mode === "create") {
-        await api.post("/api/wallets", values);
+        addWallet({
+          name: values.name,
+          bank_name: values.bank_name,
+          currency: values.currency,
+          balance: values.balance ?? 0,
+        });
         toast.success("Dompet baru berhasil dibuat.");
       } else {
-        await api.put(`/api/wallets/${initialData?.id}`, { 
-            name: values.name, 
-            bank_name: values.bank_name 
-        });
-        toast.success("Dompet berhasil diperbarui.");
+        // TODO: Implementasikan editWallet di context jika diperlukan
+        toast.info("Fitur edit dompet belum diimplementasikan.");
       }
-      onSuccess(); // Panggil fungsi refresh
-      setIsOpen(false); // Tutup dialog
+      onSuccess();
+      setIsOpen(false);
       form.reset({ name: "", balance: undefined });
     } catch (error) {
       console.error("Form submission error:", error);
@@ -149,7 +151,6 @@ interface WalletFormDialogProps {
                   <FormItem>
                     <FormLabel>Saldo Awal (Opsional)</FormLabel>
                     <FormControl>
-                      {/* [FIX] Mengganti value dengan ?? '' untuk menangani kasus undefined */}
                       <Input type="number" placeholder="0" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
